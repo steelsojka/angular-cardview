@@ -25,7 +25,7 @@ angular.module("angular-cardview", []).directive("cardView", ["$injector", funct
       var $parse = $injector.get("$parse");
       var $templateCache = $injector.get("$templateCache");
       
-      var template = $templateCache.get(attrs.template);
+      var template = $templateCache.get(attrs.template).trim();
       var reverse = "reverse" in attrs;
       var onUpdateContentWrapper = "onUpdateContent" in attrs ? $parse(attrs.onUpdateContent)(scope) : null;
       var override = "override" in attrs;
@@ -55,18 +55,21 @@ angular.module("angular-cardview", []).directive("cardView", ["$injector", funct
       scope.$watch("data.length", onDataAdd);
       
       var onUpdateContent = override ? onUpdateContentWrapper : function(el, data) {
+        
         // Data for the template is all namespaced under "card"
         var compTemp = $compile(template)(angular.extend(scope.$new(), {card: data}));
         
         //Existing scopes get destroyed when the html is replaced
-        angular.element(el).html(compTemp);
+        angular.element(el).html("").append(compTemp);
         
-        scope.index = cardView.page; // Check to see if this is right
+        scope.index = reverse 
+          ? cardView.page !== 0 ? cardView.pageCount - cardView.page : 0
+          : cardView.page; // Check to see if this is right
         
         if (onUpdateContentWrapper) {
-          onUpdateContentWrapper.call(cardView, el, data);          
+          onUpdateContentWrapper.call(this, el, data);          
         }
-      });
+      };
       
       var cardView = new CardView(element[0], {
         direction: direction,
@@ -74,9 +77,11 @@ angular.module("angular-cardview", []).directive("cardView", ["$injector", funct
         dataset: scope.data,
         onUpdateContent: function(el, data) {
           var self = this;
-          $timeout($scope.$apply(function() { // Force async to avoid duplicate digest cycles
-            onUpdateContent.call(self, el, data);
-          }));
+          $timeout(function() { // Force async to avoid duplicate digest cycles
+            scope.$apply(function() {
+              onUpdateContent.call(self, el, data);
+            });
+          });
         }
       });
     }

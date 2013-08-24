@@ -1,7 +1,7 @@
 angular-cardview
 ================
 
-This script is an angular component built for Matteo Spinelli's [http://cubiq.org/cardview](CardView) script.
+This script is an angular component built for Matteo Spinelli's [CardView](http://cubiq.org/cardview) script.
 
 This component adds a couple of features like reverse direction and indicators.
 

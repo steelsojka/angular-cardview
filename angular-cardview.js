@@ -6,7 +6,7 @@
  * 
  * This script is an angular component built for Matteo Spinelli's [http://cubiq.org/cardview](CardView) script.
  * 
- * @param {String} template The template to compile for each card.
+ * @param {Expression} template The template to compile for each card.
  * @param {Array} dataset An array of card data.
  * @param {String="slide"} [effect] Animation effect to use.
  * @param {Expression} [on-content-update] Function to call when content needs updating.
@@ -14,6 +14,7 @@
  * @param {String="horizontal"} [direction] Direction for the animation and swiping.
  * @param {*} [indicators] Whether to show indicators.
  * @param {*} [override] Bypasses the default onUpdateContent. This will keep templates from getting compiled. Use to write yout own custom behavior instead of whats provided.
+ * @param {Expression} [on-create] An expression to handle when the cardview is instantizted. Available through `$cardview`
  * 
  */
 angular.module("angular-cardview", []).directive("cardView", ["$injector", function($injector) {
@@ -21,24 +22,27 @@ angular.module("angular-cardview", []).directive("cardView", ["$injector", funct
     restrict: "EA",
     scope: {
       dataset: "=",
-      onUpdateContentWrapper: "&onUpdateContent"
+      template: "&",
+      onUpdateContentWrapper: "&onUpdateContent",
+      onCreate: "&"
     },
     template: [
-      "<div class='deck'>",
-        "<div class='card'></div>",
-        "<div class='card'></div>",
-        "<div class='card'></div>",
+      "<div class='card-view'>",
+        "<div class='deck'>",
+          "<div class='card'></div>",
+          "<div class='card'></div>",
+          "<div class='card'></div>",
+        "</div>",
       "</div>",
-      "<div ng-show='indicators' class='indicator-container'>",
+      "<div ng-show='indicators && dataset.length > 1' class='indicator-container'>",
         "<div class='indicator' ng-class='{active: index == $index}' ng-repeat='card in dataset'></div>",
       "</div>"
     ].join(""),
     link: function(scope, element, attrs) {
       var $compile = $injector.get("$compile");
       var $timeout = $injector.get("$timeout");
-      var $parse = $injector.get("$parse");
       var $templateCache = $injector.get("$templateCache");
-      var template = $templateCache.get(attrs.template).trim();
+      var template = $templateCache.get(scope.template()).trim();
       var reverse = "reverse" in attrs;
       var override = "override" in attrs;
       var effect = attrs.effect || "slide";
@@ -60,26 +64,20 @@ angular.module("angular-cardview", []).directive("cardView", ["$injector", funct
       }
       
       function onDataAdd(val, oldVal) {
-        console.log(cardView);
-        
         if (val === oldVal) {
           return;
         }
-        
-        /**
-         * TODO: 
-         * Perform our logic for adding cards
-         */
+
+        cardView.pageCount = val.length;
+        cardView.goToPage(cardView.page);
       }
       
-      
-      
-      scope.$watch("data.length", onDataAdd);
+      scope.$watch("dataset", onDataAdd, true);
       
       var onUpdateContent = override ? onUpdateContentWrapper : function(el, data) {
         
         // Data for the template is all namespaced under "card"
-        var childScope = angular.extend(scope.$new(true), {card: data});
+        var childScope = angular.extend(scope.$parent.$new(), {card: data});
         
         var compTemp = $compile(template)(childScope);
         
@@ -97,7 +95,7 @@ angular.module("angular-cardview", []).directive("cardView", ["$injector", funct
 
       };
       
-      var cardView = new CardView(element[0], {
+      var cardView = new CardView(element.children()[0], {
         direction: direction,
         effect: effect,
         dataset: scope.dataset,
@@ -109,6 +107,8 @@ angular.module("angular-cardview", []).directive("cardView", ["$injector", funct
           }));
         }
       });
+
+      scope.onCreate({$cardview: cardView});
     }
     
   }

@@ -17,6 +17,22 @@ angular.module("angular-cardview").controller("testCtrl", function($scope) {
       console.log("UPDATEEE!!!");
     };
 
+    var counter = 0;
+
+    $scope.add = function() {
+    	$scope.data.splice(1, 0, {
+    		img: '../imgs/img1.jpg',
+    		title: 'Added Card ' + ++counter,
+    		text: 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+    	});
+
+    	$scope.cardView.page = 1;
+    };
+
+    $scope.onCreate = function(cardView) {
+    	$scope.cardView = cardView;
+    };
+
     $scope.data = [
     	{
     		img: '../imgs/img1.jpg',
@@ -76,7 +92,7 @@ body {
 	font-size: 12px;
 }
 
-card-view {
+.card-view {
   display:block;
 	position: absolute;
 	z-index: 1;
@@ -88,7 +104,7 @@ card-view {
 	left: 0;
 	bottom: 0;
 	right: 0;
-	overflow: hidden;
+	/*overflow: hidden;*/
 
 	/* Prevent native touch events on Windows */
 	-ms-touch-action: none;
@@ -168,18 +184,41 @@ card-view {
   left: 0;
   z-index: 10000;
 }
+.indicator {
+	display: inline-block;
+	background-color: rgba(0,0,0,0.2);
+	border-radius: 15px;
+	width: 7px;
+	height: 7px;
+	list-style: none;
+	margin-left: 6px;
+}
+
+.indicator-container {
+	padding: 0 0 5px 0;
+	text-align: center;
+}
+
+.indicator:first-child {
+	margin-left: 0;
+}
+
+.indicator.active {
+	background-color: rgba(0,0,0,0.8);
+}
 </style>
 
 </head>
 <body ng-controller="testCtrl">
 
-  <card-view dataset="data" effect="rotate" template="cards.html"></card-view>
+  <card-view dataset="data" effect="rotate" on-create="onCreate($cardview)" template="'cards.html'"></card-view>
 
   <script type="text/ng-template" id="cards.html">
     <div>
 			<h3>{{card.title}}</h3>
 			<img ng-src="{{card.img}}" alt="thumb" width="125" height="125">
 			<p>{{card.text}}</p>
+			<button ng-click="add()">Add</buton>
 		</div>
   </script>
 </body>
